@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Espresso timer</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+  <div id="app">
+    <v-app>
+        <v-app-bar app>
+            <v-toolbar-title>Espresso timer</v-toolbar-title>
+        </v-app-bar>
+
+        <v-main>
+            <v-container>
+                <h2 class="text-h6 text-center">Timer</h2>
+                <v-row class="mt-8">
+                    <v-col cols="2" offset="2">
+                        <v-label>Grind level</p>
+                    </v-col>
+                    <v-col cols="6">
+                        <v-slider
+                            v-model="grindLevel"
+                            thumb-color="primary"
+                            thumb-label="always"
+                            @change="storeValue('grindLevel')"
+                            min="1"
+                            max="20"
+                            ></v-slider>
+                    </v-col>
+                </v-row>
+
+                <v-row>
+                    <v-col cols="2" offset="2">
+                        <v-label>Pre-infusion (in s)</p>
+                    </v-col>
+                    <v-col cols="6">
+                        <v-slider
+                            v-model="preinfusionTimer"
+                            thumb-color="primary"
+                            thumb-label="always"
+                            :readonly="interval !== null"
+                            @change="storeValue('preinfusionTimer')"
+                            min="0"
+                            max="10"
+                            ></v-slider>
+                    </v-col>
+                </v-row>
+
+                <v-row>
+                    <v-col cols="2" offset="2">
+                        <v-label>Total time (in s)</p>
+                    </v-col>
+                    <v-col cols="6">
+                        <v-slider
+                            v-model="totalTimer"
+                            thumb-color="primary"
+                            thumb-label="always"
+                            :readonly="interval !== null"
+                            @change="storeValue('totalTimer')"
+                            min="0"
+                            max="40"
+                            ></v-slider>
+                    </v-col>
+                </v-row>
+
+                <v-row>
+                    <v-col cols="12" class="text-center">
+                        <v-btn
+                            class="mx-4"
+                            fab
+                            dark
+                            large
+                            color="primary"
+                            @click="buttonFunction"
+                            >
+                            <v-icon dark v-if="interval">
+                                mdi-stop
+                            </v-icon>
+                            <v-icon dark v-else-if="hasTimed">
+                                mdi-replay
+                            </v-icon>
+                            <v-icon dark v-else>
+                                mdi-play
+                            </v-icon>
+                        </v-btn>
+                    </v-col>
+                    <v-col cols="12" class="text-center" v-if="!interval && hasTimed">
+                        <v-simple-table class="text-center">
+                            <template v-slot:default>
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Grind level
+                                        </th>
+                                        <th>
+                                            Pre-infusion
+                                        </th>
+                                        <th>
+                                            Total time
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ grindLevel }}</td>
+                                        <td>{{ initialPreinfusionTimer - preinfusionTimer }}</td>
+                                        <td>{{ initialTotalTimer - totalTimer + extraTotalTime }}</td>
+                                    </tr>
+                                </tbody>
+                            </template>
+                        </v-simple-table>
+                    </v-col>
+                    <v-col cols="12" class="text-center" v-if="!interval && hasTimed">
+                        <v-btn
+                            v-if="hasTimed"
+                            class="mx-4"
+                            fab
+                            dark
+                            large
+                            color="primary"
+                            @click="saveFunction"
+                            >
+                            <v-icon dark>
+                                mdi-content-save
+                            </v-icon>
+                        </v-btn>
+                    </v-col>
+                </v-row>
+
+                <v-divider class="my-8"></v-divider>
+
+                <h2 class="text-h6 text-center">History</h2>
+                <v-simple-table class="text-center" fixed-header v-if="history.length > 0">
+                    <template v-slot:default>
+                        <thead>
+                            <tr>
+                                <th>
+                                    Grind level
+                                </th>
+                                <th>
+                                    Pre-infusion
+                                </th>
+                                <th>
+                                    Total time
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="point in history">
+                                <td>{{ point.grindLevel }}</td>
+                                <td>{{ point.preinfusionTime }}</td>
+                                <td>{{ point.totalTime }}</td>
+                            </tr>
+                        </tbody>
+                    </template>
+                </v-simple-table>
+                <p class="text-center" v-else>/</p>
+            </v-container>
+        </v-main>
+    </v-app>
+  </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script type="text/javascript">
+var ONE_SECOND = 100;  // TODO
+
+function requestMic(handleSuccess, handleError) {
+  try {
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioContext();
+
+      navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+      navigator.getUserMedia({audio: true}, handleSuccess, handleError);
+  } catch (e) {
+      handleError();
+  }
+}
+
+var app = new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    data: {
+        //audioBeep: new Audio('audio_file.mp3'),
+        //audioEnd: new Audio('audio_file.mp3'),
+        hasTimed: false,
+        interval: null,
+        grindLevel: window.localStorage.getItem('grindLevel') || 5,
+        initialPreinfusionTimer: null,
+        preinfusionTimer: window.localStorage.getItem('preinfusionTimer') || 4,
+        initialTotalTimer: null,
+        totalTimer: window.localStorage.getItem('totalTimer') || 25,
+        extraTotalTime: 0,
+        history: window.localStorage.getItem('history') || [],
+    },
+    methods: {
+        buttonFunction() {
+            if (this.interval) {
+                return this.stopTimer();
+            }
+            else if (this.hasTimed) {
+                return this.resetFunction();
+            }
+            return this.startTimer();
+        },
+        resetFunction() {
+            this.stopTimer();
+            this.hasTimed = false;
+
+            this.extraTotalTime = 0;
+            if (this.initialPreinfusionTimer) {
+                this.preinfusionTimer = this.initialPreinfusionTimer;
+            }
+            if (this.initialTotalTimer) {
+                this.totalTimer = this.initialTotalTimer;
+            }
+        },
+        saveFunction() {
+            this.history.push({
+                grindLevel: this.grindLevel,
+                preinfusionTime: this.initialPreinfusionTimer - this.preinfusionTimer,
+                totalTime: this.initialTotalTimer - this.totalTimer + this.extraTotalTime,
+            });
+            this.storeValue('history');
+            this.resetFunction();
+        },
+        startTimer() {
+            var handleSuccess = (stream) => {
+                var options = {
+                    onVoiceStart: function() {
+                        console.log('voice start');
+                    },
+                    onVoiceStop: function() {
+                        console.log('voice stop');
+                    },
+                    onUpdate: function(val) {
+                        console.log('curr val:', val);
+                    }
+                };
+                // TODO: vad(audioContext, stream, options);
+            };
+            requestMic(
+                handleSuccess,
+                () => {
+                    console.warn('Could not connect microphone. Possibly rejected by the user or blocked by the browser.');
+
+                    console.log('Starting timer without voice detection.')
+                    this.hasTimed = true;
+
+                    this.initialPreinfusionTimer = this.preinfusionTimer;
+                    this.initialTotalTimer = this.totalTimer;
+
+                    this.interval = window.setInterval(() => {
+                        // TODO: this.audioBeep.play();
+                        if (this.preinfusionTimer > 0) {
+                            this.preinfusionTimer -= 1;
+                        } else {
+                            if (this.totalTimer > 0) {
+                                this.totalTimer -= 1;
+                            } else {
+                                if (this.totalTimer == 0) {
+                                    // TODO: this.audioEnd.play();
+                                }
+                                this.extraTotalTime += 1;
+                            }
+                        }
+                    }, ONE_SECOND);
+                }
+            );
+        },
+        stopTimer() {
+            console.log('Timer stopped.')
+            if (this.interval) {
+                window.clearInterval(this.interval);
+            }
+            this.interval = null;
+        },
+        storeValue(item) {
+            window.localStorage.setItem(item, this[item]);
+        },
+    },
+});
+</script>
+</body>
+</html>
