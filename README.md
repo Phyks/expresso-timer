@@ -5,10 +5,19 @@ A simple timer for extracting expressos.
 
 ## Usage
 
-Just open `index.html` with your browser.
+```
+npm install
+npm run build
+```
+
+Then, just open `index.html` with your browser.
 
 
 ## License
+
+Tick sound from https://soundbible.com/2044-Tick.html.
+
+End sound from https://soundbible.com/1630-Computer-Magic.html.
 
 Code published under an MIT license.
 

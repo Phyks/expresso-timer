@@ -1,0 +1,22 @@
+{
+  "name": "expresso-timer",
+  "version": "1.0.0",
+  "description": "Expresso timer ==============",
+  "main": "index.js",
+  "scripts": {
+    "build": "rimraf bundle.js && browserify index.js > bundle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "gitea@git.phyks.me:phyks/expresso-timer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "analyser-frequency-average": "^1.0.0"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "rimraf": "^3.0.2"
+  }
+}
