@@ -17,6 +17,30 @@ var vad = require('./vad.js');
         }
     }
 
+    var INITIAL_GRIND_LEVEL = 5;
+    try {
+        INITIAL_GRIND_LEVEL = window.localStorage.getItem('grindLevel') || INITIAL_GRIND_LEVEL;
+    } catch {
+    }
+
+    var INITIAL_PREINFUSION_TIMER = 4;
+    try {
+        INITIAL_PREINFUSION_TIMER = window.localStorage.getItem('preinfusionTimer') || INITIAL_PREINFUSION_TIMER;
+    } catch {
+    }
+
+    var INITIAL_TOTAL_TIMER = 25;
+    try {
+        INITIAL_TOTAL_TIMER = window.localStorage.getItem('totalTimer') || INITIAL_TOTAL_TIMER;
+    } catch {
+    }
+
+    var INITIAL_HISTORY = [];
+    try {
+        INITIAL_HISTORY = JSON.parse(window.localStorage.getItem('history')) || INITIAL_HISTORY;
+    } catch {
+    }
+
     var app = new Vue({
         el: '#app',
         vuetify: new Vuetify(),
@@ -27,16 +51,16 @@ var vad = require('./vad.js');
             dialogDelete: false,
             hasTimed: false,
             interval: null,
-            grindLevel: window.localStorage.getItem('grindLevel') || 5,
+            grindLevel: INITIAL_GRIND_LEVEL,
             initialPreinfusionTimer: null,
-            preinfusionTimer: window.localStorage.getItem('preinfusionTimer') || 4,
+            preinfusionTimer: INITIAL_PREINFUSION_TIMER,
             initialTotalTimer: null,
-            totalTimer: window.localStorage.getItem('totalTimer') || 25,
+            totalTimer: INITIAL_TOTAL_TIMER,
             extraTotalTime: 0,
             shouldUseAudio: false,
             voiceDetector: null,
             voiceActivityStartDate: new Date(0),
-            history: JSON.parse(window.localStorage.getItem('history')) || [],
+            history: INITIAL_HISTORY,
             historyHeaders: [
                 {
                     text: 'Grind level',
